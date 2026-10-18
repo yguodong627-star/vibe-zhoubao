@@ -1,0 +1,39 @@
+PASS URL 规范化去追踪参数/www/协议/锚点：example.com/a/b?a=1&b=2
+PASS javascript: 链接被拒绝
+PASS 粘贴链接解析（上一行标题/Markdown/竖线）：["产品周刊第3期","Foo","标题B","d.com/only"]
+PASS RSS 解析（HTML 摘要剥离、日期）
+PASS Atom 解析
+PASS OPML 解析
+PASS 预设源浏览器真实抓取成功 11/11：少数派、极客公园、雷峰网、Simon Willison’s Weblog、Wired、GitHub Blog、Google Blog、DEV Community、Hacker News 首页、Hacker News 近 7 天 ≥100 分、GitHub 近 7 天新仓库（按 star）
+PASS 36氪 / The Verge / 人人都是产品经理 / Product Talk / 爱范儿 在浏览器里被 CORS 拦截（如实标注为不支持）：{"https://www.36kr.com/feed":"被拦截:Failed to fetch","https://www.theverge.com/rss/index.xml":"被拦截:Failed to fetch","https://www.woshipm.com/feed":"被拦截:Failed to fetch","https://www.producttalk.org/feed/":"被拦截:Failed to fetch","https://www.ifanr.com/feed":"被拦截:Failed to fetch"}
+PASS UI 添加不支持跨域源：被拒绝并给出原因；对话框：alert: 未添加。
+
+无法读取：该站点没有开放跨域（CORS）或网络/地址有误。浏览器不会告诉页面具体是哪一种。若地址在浏览器里能正常打开，请用下方“粘贴导入”
+PASS 条目池条目数 277
+PASS 再次抓取去重：277 → 277
+PASS 池内无重复规范化链接
+PASS 按得分降序
+PASS 得分明细可展开
+PASS 关键词权重生效（+500×时效系数）：得分 198.2 时效 0.39
+PASS 星标可用
+PASS 已读可用
+PASS 选入 3 条周报
+PASS 粘贴链接预览：测试标题一 — https://example.org/post-1?utm_source=xFoo 文章 — http
+PASS 粘贴导入并按规范化链接去重（3 行 → 2 条）：["测试标题一|example.org/post-1","Foo 文章|example.net/foo"]
+PASS OPML 导入为信息源
+PASS XML 粘贴导入，同标题不同链接合并为 1 条：1
+PASS Markdown 每条含原文链接
+PASS Markdown 含点评，缺失处标“待填写”
+PASS 分组输出
+PASS HTML 导出含每条原文链接
+PASS HTML 导出转义标题
+PASS AI 链路（模拟接口）：请求带 key、结果写回：这是模拟接口返回的摘要。
+PASS AI 摘要导出时带“AI 生成，需核对”标注
+PASS 备份文件不含 AI key
+PASS 清空数据
+PASS 备份导入还原条目数 280
+PASS 刷新页面后数据仍在（IndexedDB）
+PASS 手机端无横向溢出
+PASS 页面无未捕获异常 
+
+通过 35 / 失败 0

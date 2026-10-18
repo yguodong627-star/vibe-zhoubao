@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#00304a">
+<title>周报台 · 信息雷达周报编辑器</title>
+<meta name="description" content="给产品经理的信息整理工作台：汇集信息源、去重打分、挑选并写点评，导出 Markdown / HTML 周报。纯前端，数据只存本机。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2300304a'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23c3cfdb' stroke-width='1.6'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%23c3cfdb'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="hero band-dark">
+  <div class="wrap top">
+    <a class="brand" href="#pool" aria-label="周报台首页">
+      <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="none" stroke="#c3cfdb" stroke-opacity=".5"/><circle cx="16" cy="16" r="8.5" fill="none" stroke="#c3cfdb"/><path d="M16 16 L25 9" stroke="#8dbfd6" stroke-width="1.6" stroke-linecap="round"/><circle cx="16" cy="16" r="2.4" fill="#c3cfdb"/></svg>
+      <span class="serif">周报台</span>
+    </a>
+    <nav class="nav" id="nav" aria-label="主导航">
+      <a href="#pool" data-v="pool">条目池</a>
+      <a href="#sources" data-v="sources">信息源</a>
+      <a href="#rules" data-v="rules">打分规则</a>
+      <a href="#report" data-v="report">周报编辑</a>
+      <a href="#backup" data-v="backup">备份</a>
+    </nav>
+  </div>
+  <div class="wrap hero-body">
+    <div>
+      <div class="eyebrow">Weekly radar · 信息雷达周报</div>
+      <h1 class="serif hero-h">把一周的信息，<br><span>整理成你自己的周报</span></h1>
+      <p class="hero-p">抓取公开信息源，去重、按你定的规则打分；你来挑、你来写点评，最后导出 Markdown 或 HTML。全程在浏览器里完成，数据只存在这台设备上。</p>
+    </div>
+    <dl class="stats" id="stats" aria-live="polite"></dl>
+  </div>
+</header>
+
+<div id="backupBar" class="wrap" hidden></div>
+
+<main>
+<!-- 条目池 -->
+<section class="view" id="v-pool" hidden>
+  <div class="pool-grid">
+    <aside class="pool-side deep" id="poolSide">
+      <div class="side-in">
+        <div class="eyebrow">筛选</div>
+        <div class="fld"><label class="f" for="fq">搜索标题 / 摘要</label><input id="fq" type="search" placeholder="关键词…" autocomplete="off"></div>
+        <div class="fld"><label class="f" for="fstatus">状态</label>
+          <select id="fstatus"><option value="all">全部</option><option value="unread">未读</option><option value="star">已星标</option><option value="picked">已选入周报</option><option value="unpicked">未选入周报</option></select></div>
+        <div class="fld"><label class="f" for="fsrc">来源</label><select id="fsrc"></select></div>
+        <div class="fld"><label class="f" for="frange">发布时间</label>
+          <select id="frange"><option value="all">不限</option><option value="7">近 7 天</option><option value="14">近 14 天</option><option value="30">近 30 天</option></select></div>
+        <div class="fld"><label class="f" for="fsort">排序</label>
+          <select id="fsort"><option value="score">按得分（高→低）</option><option value="time">按发布时间（新→旧）</option></select></div>
+        <div class="side-actions">
+          <button class="btn light sm" id="btnRefresh">抓取所有信息源</button>
+          <button class="btn glass sm" id="btnMarkAll">当前列表全部标已读</button>
+        </div>
+        <p class="side-note small" id="refreshMsg"></p>
+      </div>
+    </aside>
+    <div class="pool-main">
+      <div class="list-head">
+        <div><div class="eyebrow">条目池</div><h2 class="sec-title" id="poolTitle">条目池</h2></div>
+        <div class="muted small" id="poolCount"></div>
+      </div>
+      <div id="poolList"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 信息源 -->
+<section class="view" id="v-sources" hidden>
+  <div class="wrap sec">
+    <div class="split">
+      <div>
+        <div class="eyebrow">信息源</div>
+        <h2 class="sec-title">哪些源能直接抓，哪些要粘贴</h2>
+        <p class="muted lead">浏览器出于安全限制，只能直接读取“明确允许跨域（CORS）”的网站。本工具<b>不使用任何公共 CORS 代理</b>（会泄露你的订阅、也不稳定）。读不了的源，请用下方“粘贴导入”。</p>
+      </div>
+    </div>
+
+    <div class="src-grid">
+      <div>
+        <h3 class="h3">我的信息源</h3>
+        <div id="srcList"></div>
+        <div class="add-box">
+          <h3 class="h3">添加信息源</h3>
+          <div class="row tabs" id="addTabs">
+            <button class="chip on" data-t="rss">RSS / Atom 地址</button>
+            <button class="chip" data-t="hn">Hacker News</button>
+            <button class="chip" data-t="gh">GitHub 热门新仓库</button>
+          </div>
+          <div id="addForm"></div>
+        </div>
+      </div>
+      <div>
+        <h3 class="h3">一键添加：实测可直连的源</h3>
+        <p class="muted small" id="presetNote"></p>
+        <div id="presetList"></div>
+      </div>
+    </div>
+
+  </div>
+  <div class="deep paste-block"><div class="wrap">
+      <div class="eyebrow">粘贴导入</div>
+      <h2 class="sec-title" style="margin-top:6px">读不了的源，用粘贴</h2>
+      <p class="lead on-dk">原因：这些站点的服务器没有返回 <code>Access-Control-Allow-Origin</code>，浏览器会拦截页面脚本读取响应。你自己打开链接没有问题，所以可以在浏览器里打开订阅地址、全选复制，再粘贴到这里；也可以直接选文件。</p>
+      <div class="row tabs" id="pasteTabs">
+        <button class="chip on" data-t="links">链接 / 文本</button>
+        <button class="chip" data-t="xml">RSS / Atom XML</button>
+        <button class="chip" data-t="opml">OPML 订阅列表</button>
+      </div>
+      <div id="pasteForm"></div>
+      <div class="blocked" id="blockedList"></div>
+  </div></div>
+</section>
+
+<!-- 打分规则 -->
+<section class="view" id="v-rules" hidden>
+  <div class="wrap sec">
+    <div class="split2">
+      <div>
+        <div class="eyebrow">打分规则 · 公开可调</div>
+        <h2 class="sec-title">每一分都能解释</h2>
+        <p class="muted lead">没有黑箱。条目得分由下面四项相加后乘以时效系数，再加星标加成。改动立即重新排序；每条的得分明细在条目池里点“得分”展开。</p>
+        <div class="formula deep">
+          <div class="eyebrow">公式</div>
+          <p class="serif f1">得分 = （来源分 + 热度分 + 关键词分）× 时效系数 + 星标加成</p>
+          <ul>
+            <li><b>来源分</b> = 该信息源的权重（0–10，在“信息源”里设置）</li>
+            <li><b>热度分</b> = ln(1 + 点赞/星标数) × 热度系数（仅 HN、GitHub 等带数字的源）</li>
+            <li><b>关键词分</b> = 命中关键词的权重之和（标题命中全额，摘要命中 50%，每词只算一次；权重可为负）</li>
+            <li><b>时效系数</b> = 0.5 ^ （发布至今天数 ÷ 半衰期），超过“最长时效”记为 0</li>
+            <li><b>星标加成</b> = 已星标条目额外加分</li>
+          </ul>
+        </div>
+      </div>
+      <div class="rules-form">
+        <h3 class="h3">关键词与权重</h3>
+        <div id="kwList"></div>
+        <div class="row kw-add"><input id="kwWord" type="text" placeholder="新关键词，例如 增长 / pricing / AI" style="max-width:260px"><input id="kwW" type="number" step="0.5" value="2" style="width:84px" aria-label="权重"><button class="btn solid sm" id="kwAdd">添加</button></div>
+        <p class="muted small">匹配不区分大小写；纯英文字母数字的词按“整词”匹配（“AI”不会命中“said”），中文按子串匹配。</p>
+        <h3 class="h3" style="margin-top:30px">其他参数</h3>
+        <div class="param-grid" id="paramForm"></div>
+        <div class="row" style="margin-top:16px"><button class="btn sm" id="rulesReset">恢复默认规则</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 周报编辑 -->
+<section class="view" id="v-report" hidden>
+  <div class="wrap sec">
+    <div class="split">
+      <div>
+        <div class="eyebrow">周报编辑</div>
+        <h2 class="sec-title">挑、排、写点评，然后导出</h2>
+        <p class="muted lead">到“条目池”点 <b>＋周报</b> 挑条目。每条都固定带原文链接（不可改），点评栏由你自己写。</p>
+      </div>
+    </div>
+    <div class="rep-grid">
+      <div class="rep-left">
+        <div class="rep-meta">
+          <div><label class="f" for="rTitle">周报标题</label><input id="rTitle" type="text" placeholder="例如：产品信息周报 · 第 42 期"></div>
+          <div><label class="f" for="rPeriod">周期</label><input id="rPeriod" type="text" placeholder="例如：2026-10-12 ~ 2026-10-18"></div>
+          <div class="full"><label class="f" for="rIntro">导语（可选）</label><textarea id="rIntro" rows="3" placeholder="本周一句话总览…"></textarea></div>
+        </div>
+        <div class="row" style="justify-content:space-between;margin:22px 0 4px"><h3 class="h3" id="entCount">条目</h3><span class="small muted" id="entWarn"></span></div>
+        <div id="entries"></div>
+      </div>
+      <aside class="rep-right">
+        <div class="out deep">
+          <div class="eyebrow">输出</div>
+          <div class="fld"><label class="f" for="rTpl">Markdown 模板</label><select id="rTpl"></select></div>
+          <label class="check"><input type="checkbox" id="rGroup"> 按“分组”输出小标题</label>
+          <label class="check"><input type="checkbox" id="rAI"> 导出时包含 AI 摘要（带“AI 生成，需核对”标注）</label>
+          <div class="row" style="margin-top:12px">
+            <button class="btn light sm" id="cpMd">复制 Markdown</button>
+            <button class="btn glass sm" id="dlMd">下载 .md</button>
+            <button class="btn glass sm" id="dlHtml">下载 .html</button>
+          </div>
+          <details class="tpl-edit"><summary>编辑 / 新建模板</summary><div id="tplEditor"></div></details>
+          <details class="tpl-edit"><summary>AI 摘要（可选，自备 key）</summary><div id="aiBox"></div></details>
+        </div>
+        <div class="tabs row" style="margin:20px 0 8px"><button class="chip on" data-pv="html">排版预览</button><button class="chip" data-pv="md">Markdown 源码</button></div>
+        <div id="prevHtml" class="prev-html"></div>
+        <pre id="prevMd" class="prev-md" hidden></pre>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- 备份 -->
+<section class="view" id="v-backup" hidden>
+  <div class="wrap sec">
+    <div class="eyebrow">备份与数据</div>
+    <h2 class="sec-title">数据只在这个浏览器里</h2>
+    <p class="muted lead">没有账号、没有服务器。清除浏览器数据、换设备或换浏览器都会丢失，所以请定期导出备份。备份文件不含你填的 AI key。</p>
+    <div class="bk-grid">
+      <div class="bk-card">
+        <h3 class="h3">导出备份</h3>
+        <p class="muted small">包含信息源、条目池（含已读/星标）、打分规则、周报草稿与自定义模板。</p>
+        <button class="btn solid" id="bkExport">下载备份 JSON</button>
+      </div>
+      <div class="bk-card">
+        <h3 class="h3">导入备份</h3>
+        <p class="muted small">选择之前导出的 JSON。</p>
+        <div class="row"><input type="file" id="bkFile" accept=".json,application/json"></div>
+        <div class="row" style="margin-top:10px"><button class="btn" id="bkMerge">合并导入</button><button class="btn danger" id="bkReplace">覆盖导入</button></div>
+        <p class="muted small">合并：只补充缺少的条目和信息源，不改动你现有的已读/星标；覆盖：整体替换当前数据。</p>
+      </div>
+      <div class="bk-card">
+        <h3 class="h3">本机存储</h3>
+        <p class="small" id="bkInfo"></p>
+        <button class="btn danger" id="bkClear">清空全部数据</button>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="foot deep">
+  <div class="wrap foot-in">
+    <div class="serif" style="font-size:22px">周报台</div>
+    <div class="small" style="color:var(--on-dark-mute)">完全免费 · 无账号 · 无限额 · 数据不上传。抓取信息源时，浏览器会直接请求对应站点（该站点能看到你的 IP）。</div>
+  </div>
+</footer>
+<div class="toast" id="toast" role="status"></div>
+<script src="app.js"></script>
+</body>
+</html>
